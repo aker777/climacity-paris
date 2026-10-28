@@ -19,12 +19,32 @@ docker compose up -d --build
 | Spark UI | http://localhost:4040 (après création d'une SparkSession) |
 | MLflow | http://localhost:5000 |
 
+## Données
+
+Rien n'est versionné : `scripts/collecte.py` télécharge tout (~500 Mo, 4 min environ) et ne fait que de
+l'acquisition. Le parsing et l'enrichissement se font ensuite en Spark dans les carnets.
+
+```bash
+docker exec -w /home/jovyan climacity-aker-jupyter python scripts/collecte.py --data data
+```
+
+| Source | Contenu | Dépôt dans `data/` |
+|--------|---------|--------------------|
+| [historique-velib-opendata](https://github.com/lovasoa/historique-velib-opendata) | 10 986 730 relevés, 1 399 stations, du 26/11/2020 au 09/04/2021, un relevé par station toutes les ~15 min | `velib/raw/velib_<quinzaine>.csv.gz` (10 fichiers) |
+| API GBFS Vélib' Métropole | référentiel actuel des stations (code -> arrondissement) | `velib/station_information.json` |
+| Open-Meteo (archive) | météo horaire de Paris-Montsouris, UTC | `meteo/meteo_montsouris_horaire.csv` |
+| EEA, service de téléchargement | NO2 (33 points de mesure) et PM2.5 (8) horaires validés d'Airparif | `air/raw/*.parquet` (50 fichiers) |
+
+**Écart avec l'énoncé.** L'extrait Vélib' 2022-2023 annoncé n'est pas public : le seul historique ouvert
+couvre l'hiver 2020-2021 (couvre-feu puis confinement). L'apprentissage utilisera donc un découpage
+temporel plutôt que 2022 / 2023. OpenAQ exigeant désormais une clé, la qualité de l'air vient de l'EEA.
+
 ## Avancement
 
 | Étape | Contenu | État |
 |-------|---------|------|
 | 1 | Socle : structure, environnement Docker (Spark 3.5, Delta 3.2, MLflow 2.17) | fait |
-| 2 | Collecte des données (Vélib', GBFS, Open-Meteo, qualité de l'air EEA) | à faire |
+| 2 | Collecte des données (Vélib', GBFS, Open-Meteo, qualité de l'air EEA) | fait |
 | 3 | `00_configuration` : paramètres et vérification de l'environnement | à faire |
 | 4 | `01_rdd_exploration` (Jour 1 matin) | à faire |
 | 5 | `02_dataframe_pipeline` (Jour 1 après-midi) | à faire |
