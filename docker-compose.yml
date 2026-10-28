@@ -1,0 +1,53 @@
+# ClimaCity Paris : JupyterLab (Spark en local[*]) + serveur MLflow
+#
+#   docker compose up -d --build
+#   JupyterLab : http://localhost:8888/lab?token=<JUPYTER_TOKEN>
+#   Spark UI   : http://localhost:4040 (dès qu'une SparkSession existe)
+#   MLflow     : http://localhost:5000
+
+services:
+  jupyter:
+    build: .
+    image: climacity-aker-jupyter:latest
+    container_name: climacity-aker-jupyter
+    ports:
+      - "${JUPYTER_PORT:-8888}:8888"
+      - "${SPARK_UI_PORT:-4040}:4040"
+    volumes:
+      - ./notebooks:/home/jovyan/notebooks
+      - ./scripts:/home/jovyan/scripts
+      - ./data:/home/jovyan/data
+    environment:
+      JUPYTER_TOKEN: "${JUPYTER_TOKEN:-climacity}"
+      MLFLOW_TRACKING_URI: "http://mlflow:5000"
+      # Lue par les carnets pour dimensionner le driver Spark sous la limite du conteneur
+      SPARK_DRIVER_MEMORY: "${SPARK_DRIVER_MEMORY:-4g}"
+    mem_limit: "${DOCKER_MEMORY_LIMIT:-7g}"
+    cpus: "${DOCKER_CPU_LIMIT:-8}"
+    depends_on:
+      mlflow:
+        condition: service_healthy
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.17.2
+    container_name: climacity-aker-mlflow
+    ports:
+      - "${MLFLOW_PORT:-5000}:5000"
+    # --serve-artifacts : les modèles transitent par HTTP, Jupyter n'a pas besoin
+    # d'accéder au disque du serveur MLflow
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
+    volumes:
+      - mlflow_data:/mlflow
+    healthcheck:
+      # pas de curl dans l'image : on interroge /health avec Python
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  mlflow_data:

@@ -1,0 +1,21 @@
+# Données téléchargées et sorties (régénérées par les carnets)
+data/*
+!data/.gitkeep
+
+# Configuration locale
+.env
+
+# Python / Jupyter
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
+checkpoints/
+
+# Systèmes
+.DS_Store
+Thumbs.db
