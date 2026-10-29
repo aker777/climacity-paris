@@ -43,7 +43,7 @@ Les carnets s'exécutent dans l'ordre : chacun lit les fichiers écrits par les 
 | `06_optimisation_bilan` | 3 après-midi | Parquet, Delta, `mesures.json` | `mesures.json` complété |
 
 Le carnet 05 inscrit à chaque exécution une nouvelle version du modèle au registre MLflow et y déplace
-l'alias `champion`.
+l'alias `champion`. Les sept carnets ont été rejoués d'affilée, chacun dans un noyau neuf, en 16 minutes environ.
 
 ## Données
 
@@ -118,13 +118,17 @@ Le bilan d'architecture complet est à la fin du carnet 06.
 
 ### Suivi MLflow
 
+Les runs de l'expérience de prédiction (les 6 runs de la validation croisée sont regroupés sous `validation_croisee`) :
+
+![Runs de prédiction](docs/mlflow_runs_prediction.png)
+
 | Comparaison des modèles | Validation croisée (6 combinaisons) |
 |---|---|
 | ![Comparaison des modèles](docs/mlflow_comparaison_modeles.png) | ![Validation croisée](docs/mlflow_validation_croisee.png) |
 | **Run du champion** | **K-Means, k de 3 à 8** |
 | ![Run du champion](docs/mlflow_run_champion.png) | ![K-Means](docs/mlflow_kmeans.png) |
 
-![Registre : la version 2 porte l'alias champion](docs/mlflow_registre_champion.png)
+![Registre : la version courante porte l'alias champion](docs/mlflow_registre_champion.png)
 
 ## Arborescence
 
