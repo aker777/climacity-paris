@@ -25,6 +25,9 @@ AIR_RAW = DATA / "air" / "raw"                           # Parquet EEA (NO2, PM2
 
 SORTIES = DATA / "output"
 PARQUET_CONSOLIDE = SORTIES / "disponibilite_parquet"    # table consolidée du Jour 1
+STATIONS_PARQUET = SORTIES / "stations"                  # référentiel des stations (carnet 02)
+METEO_PARQUET = SORTIES / "meteo_horaire"                # table meteo_horaire (carnet 02)
+AIR_PARQUET = SORTIES / "air_horaire"                    # NO2 / PM2.5 horaires en UTC (carnet 02)
 DELTA = SORTIES / "delta"                                # tables Delta (Jours 2 et 3)
 STREAM = SORTIES / "stream"                              # entrée, checkpoints du flux
 MODELES = SORTIES / "modeles"
@@ -92,3 +95,52 @@ def enregistrer_mesures(section: str, mesures: dict) -> None:
     contenu[section] = mesures
     MESURES_JSON.parent.mkdir(parents=True, exist_ok=True)
     MESURES_JSON.write_text(json.dumps(contenu, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def stages_spark_ui(spark: SparkSession, description: str,
+                    tous_les_jobs: bool = False) -> list[dict]:
+    """Lit dans l'API REST du Spark UI les stages des jobs portant une description.
+
+    Les carnets nomment leurs actions avec ``sc.setJobDescription()`` ; cette fonction
+    retrouve le job correspondant et renvoie, pour chacun de ses stages, les chiffres de
+    l'onglet *Stages* du Spark UI.
+
+    Args:
+        spark: Session active (son Spark UI doit être ouvert).
+        description: Texte passé à ``sc.setJobDescription`` avant l'action.
+        tous_les_jobs: Si False, seul le dernier job portant la description est lu ; si True,
+            tous le sont (une requête DataFrame avec shuffle déclenche plusieurs jobs quand
+            l'exécution adaptative, AQE, est active).
+
+    Returns:
+        Une liste de dictionnaires, un par stage exécuté : ``job``, ``stage``, ``statut``,
+        ``nom``, ``taches``, ``calcul_s`` (temps cumulé des tâches), ``entree_mo``,
+        ``shuffle_ecrit_ko`` et ``shuffle_lu_ko``.
+
+    Example:
+        >>> sc.setJobDescription("comptage"); spark.range(10).count()
+        >>> stages_spark_ui(spark, "comptage")[0]["taches"]   # doctest: +SKIP
+        8
+    """
+    import requests
+
+    sc = spark.sparkContext
+    api = f"{sc.uiWebUrl}/api/v1/applications/{sc.applicationId}"
+    jobs = requests.get(f"{api}/jobs", timeout=10).json()       # du plus récent au plus ancien
+    retenus = [j for j in jobs if j.get("description") == description]
+    if not tous_les_jobs:
+        retenus = retenus[:1]
+    lignes = []
+    paires = sorted(((j, s) for j in retenus for s in j["stageIds"]), key=lambda p: (p[0]["jobId"], p[1]))
+    for job, id_stage in paires:
+        tentatives = requests.get(f"{api}/stages/{id_stage}", timeout=10).json()
+        if not tentatives:
+            continue
+        s = tentatives[0]
+        lignes.append({
+            "job": job["jobId"], "stage": id_stage, "statut": s["status"], "nom": s["name"],
+            "taches": s["numTasks"], "calcul_s": s["executorRunTime"] / 1000,
+            "entree_mo": s["inputBytes"] / 1e6, "shuffle_ecrit_ko": s["shuffleWriteBytes"] / 1e3,
+            "shuffle_lu_ko": s["shuffleReadBytes"] / 1e3,
+        })
+    return lignes
