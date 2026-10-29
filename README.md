@@ -59,7 +59,7 @@ temporel plutôt que 2022 / 2023. OpenAQ exigeant désormais une clé, la qualit
 | 4 | `01_rdd_exploration` (Jour 1 matin) : parsing RDD, comptage par station, trous de collecte, Pandas / Spark, DAG | fait |
 | 5 | `02_dataframe_pipeline` (Jour 1 après-midi) : nettoyage, référentiel des stations, météo, air, jointures broadcast, cache, Parquet | fait |
 | 6 | `03_spark_sql_delta` (Jour 2 matin) : 3 questions métier en SQL, LAG / LEAD et moyenne mobile 3 h, Delta (MERGE, time travel) | fait |
-| 7 | `04_streaming` (Jour 2 après-midi) | à faire |
+| 7 | `04_streaming` (Jour 2 après-midi) : simulateur de flux, `readStream` à schéma explicite, fenêtres glissantes 10 min / 2 min avec watermark, sink Delta, table `alertes`, rejet prouvé de la donnée tardive, reprise sur checkpoint | fait |
 | 8 | `05_mllib_prediction` + MLflow + bonus qualité de l'air (Jour 3 matin) | à faire |
 | 9 | `06_optimisation_bilan` (Jour 3 après-midi) | à faire |
 
