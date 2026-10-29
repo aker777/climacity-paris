@@ -8,6 +8,7 @@ tout part de la racine du projet (dossier parent de ``scripts/``), qui vaut
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -71,3 +72,23 @@ def creer_session(nom: str, **options: str) -> SparkSession:
     spark.sparkContext.setLogLevel("WARN")
     spark.sparkContext.setCheckpointDir(str(SORTIES / "checkpoints_rdd"))
     return spark
+
+
+def enregistrer_mesures(section: str, mesures: dict) -> None:
+    """Ajoute des mesures de performance au fichier commun ``MESURES_JSON``.
+
+    Chaque carnet y range ses chronométrages sous sa propre section ; le carnet 06 les relit
+    pour le bilan d'architecture. Une section déjà présente est remplacée, ce qui garde le
+    fichier à jour quand on rejoue un carnet.
+
+    Args:
+        section: Nom de la section, en général celui du carnet (ex. ``"01_rdd_exploration"``).
+        mesures: Dictionnaire sérialisable en JSON (durées en secondes, volumes...).
+
+    Example:
+        >>> enregistrer_mesures("01_rdd_exploration", {"pandas_s": 4.2, "spark_s": 2.1})
+    """
+    contenu = json.loads(MESURES_JSON.read_text(encoding="utf-8")) if MESURES_JSON.exists() else {}
+    contenu[section] = mesures
+    MESURES_JSON.parent.mkdir(parents=True, exist_ok=True)
+    MESURES_JSON.write_text(json.dumps(contenu, indent=2, ensure_ascii=False), encoding="utf-8")

@@ -56,7 +56,7 @@ temporel plutôt que 2022 / 2023. OpenAQ exigeant désormais une clé, la qualit
 | 1 | Socle : structure, environnement Docker (Spark 3.5, Delta 3.2, MLflow 2.17) | fait |
 | 2 | Collecte des données (Vélib', GBFS, Open-Meteo, qualité de l'air EEA) | fait |
 | 3 | `00_configuration` : paramètres et vérification de l'environnement | fait |
-| 4 | `01_rdd_exploration` (Jour 1 matin) | à faire |
+| 4 | `01_rdd_exploration` (Jour 1 matin) : parsing RDD, comptage par station, trous de collecte, Pandas / Spark, DAG | fait |
 | 5 | `02_dataframe_pipeline` (Jour 1 après-midi) | à faire |
 | 6 | `03_spark_sql_delta` (Jour 2 matin) | à faire |
 | 7 | `04_streaming` (Jour 2 après-midi) | à faire |
