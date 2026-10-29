@@ -135,7 +135,10 @@ def stages_spark_ui(spark: SparkSession, description: str,
     lignes = []
     paires = sorted(((j, s) for j in retenus for s in j["stageIds"]), key=lambda p: (p[0]["jobId"], p[1]))
     for job, id_stage in paires:
-        tentatives = requests.get(f"{api}/stages/{id_stage}", timeout=10).json()
+        reponse = requests.get(f"{api}/stages/{id_stage}", timeout=10)
+        if not reponse.ok:              # stage oublié par le Spark UI (au-delà de spark.ui.retainedStages)
+            continue
+        tentatives = reponse.json()
         if not tentatives:
             continue
         s = tentatives[0]
